@@ -1,0 +1,199 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crear Producto - Veterinaria</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" type="text/css" href="resources/css/productoform.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style type="text/css">
+        .product-form-container {
+            display: none;
+        }
+        .product-form-container.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="product-form-container">
+        <form id="productForm" class="product-form">
+            <h2>Crear Nuevo Producto</h2>
+
+            <div class="form-group">
+                <label for="Nombre_Producto">Nombre del Producto:</label>
+                <input type="text" id="Nombre_Producto" name="Nombre_Producto" required="required" />
+            </div>
+
+            <div class="form-group">
+                <label for="Categoria">Categoría:</label>
+                <select id="Categoria" name="Categoria" required="required">
+                    <option value="">Seleccione una categoría</option>
+                    <option value="Medicamento">Medicamento</option>
+                    <option value="Alimento">Alimento</option>
+                    <option value="Accesorio">Accesorio</option>
+                    <option value="Insumos">Insumos</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="Marca_Producto">Marca:</label>
+                <input type="text" id="Marca_Producto" name="Marca_Producto" required="required" />
+            </div>
+
+            <div class="form-group">
+                <label for="Cantidad_Producto">Cantidad:</label>
+                <input type="number" id="Cantidad_Producto" name="Cantidad_Producto" required="required" min="0" />
+            </div>
+
+            <div class="form-group">
+                <label for="Precio_Producto">Precio:</label>
+                <input type="number" id="Precio_Producto" name="Precio_Producto" required="required" min="0" step="0.01" />
+            </div>
+
+            <div class="form-group">
+                <label for="Nombre_Proveedor">Proveedor:</label>
+                <input type="text" id="Nombre_Proveedor" name="Nombre_Proveedor" />
+            </div>
+
+            <div class="form-group">
+                <label for="caducidad">Fecha de Caducidad:</label>
+                <input type="date" id="caducidad" name="Fecha_Caducidad" />
+            </div>
+
+            <div class="form-group">
+                <label for="Descripcion_Producto">Descripción:</label>
+                <textarea id="Descripcion_Producto" name="Descripcion_Producto" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="Stock_Producto">Stock:</label>
+                <input type="number" id="Stock_Producto" name="Stock_Producto" required="required" min="0" />
+            </div>
+
+            <button type="submit" class="submit-button">Crear Producto</button>
+            <button type="button" class="back-button" onclick="window.location.href='inventorymodule.xhtml'">Volver</button>
+        </form>
+    </div>
+
+    <script type="text/javascript">
+        //<![CDATA[
+        document.addEventListener('DOMContentLoaded', function() {
+            const productFormContainer = document.querySelector('.product-form-container');
+
+            // Calcular contextPath dinámicamente
+            let contextPath = '';
+            try {
+                const parts = window.location.pathname.split('/');
+                contextPath = parts.length > 1 ? '/' + parts[1] : '';
+            } catch(e){ contextPath = ''; }
+
+            console.log('DEBUG - fetch /api/user-info response status:');
+
+            fetch(contextPath + '/api/user-info', { credentials: 'include' })
+                .then(function(response) {
+                    console.log('DEBUG - fetch /api/user-info response status:', response.status);
+                    if (!response.ok) {
+                        console.warn('Advertencia: Respuesta no OK de /api/user-info. Redirigiendo a login.');
+                        window.location.href = contextPath + '/login.xhtml';
+                        throw new Error('No autenticado');
+                    }
+                    return response.json();
+                })
+                .then(function(user) {
+                    console.log('DEBUG - Usuario recibido:', user);
+                    if (user.rol !== 'Administrador') {
+                        console.warn('Advertencia: Rol no es Administrador. Acceso denegado.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Acceso denegado',
+                            text: 'Solo los administradores pueden crear productos',
+                            confirmButtonText: 'OK'
+                        }).then(function() {
+                            window.location.href = contextPath + '/inventorymodule.xhtml';
+                        });
+                        return;
+                    }
+
+                    console.log('DEBUG - Usuario es Administrador. Mostrando formulario.');
+                    productFormContainer.classList.add('visible');
+
+                    const fechaInput = document.getElementById('caducidad');
+                    const hoy = new Date();
+                    hoy.setDate(hoy.getDate() + 1);
+                    fechaInput.min = hoy.toISOString().split('T')[0];
+
+                    document.getElementById('productForm').addEventListener('submit', function(e) {
+                        e.preventDefault();
+
+                        const formData = new FormData(this);
+                        const producto = {
+                            nombreProducto: formData.get('Nombre_Producto'),
+                            categoria: formData.get('Categoria'),
+                            marcaProducto: formData.get('Marca_Producto'),
+                            cantidadProducto: parseInt(formData.get('Cantidad_Producto') || '0'),
+                            precioProducto: parseFloat(formData.get('Precio_Producto') || '0'),
+                            nombreProveedor: formData.get('Nombre_Proveedor'),
+                            fechaCaducidad: formData.get('Fecha_Caducidad') ? new Date(formData.get('Fecha_Caducidad')).toISOString() : null,
+                            descripcionProducto: formData.get('Descripcion_Producto'),
+                            stockProducto: parseInt(formData.get('Stock_Producto') || '0')
+                        };
+
+                        console.log('DEBUG - Enviando producto:', producto);
+                        console.log('DEBUG - Enviando a URL:', contextPath + '/api/productos/crear');
+
+                        fetch(contextPath + '/api/productos/crear', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(producto),
+                            credentials: 'include'
+                        })
+                        .then(function(response) {
+                            console.log('DEBUG - Respuesta del POST de producto status:', response.status);
+                            if (!response.ok) {
+                                return response.json().then(function(err) {
+                                    const errorMessage = err.error || 'Error desconocido del servidor';
+                                    console.error('Error en la respuesta del servidor:', errorMessage);
+                                    throw new Error(errorMessage);
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(function(data) {
+                            console.log('DEBUG - Producto creado exitosamente:', data);
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Éxito',
+                                text: 'Producto creado correctamente',
+                                confirmButtonText: 'OK'
+                            }).then(function() {
+                                window.location.href = contextPath + '/inventorymodule.xhtml';
+                            });
+                        })
+                        .catch(function(error) {
+                            console.error('Error al enviar formulario:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Error al crear producto: ' + error.message,
+                                confirmButtonText: 'OK'
+                            });
+                        });
+                    });
+                })
+                .catch(function(error) {
+                    console.error('ERROR CRÍTICO: Fallo al obtener información del usuario o error de red:', error);
+                    if (!window.location.href.includes('login.xhtml')) {
+                        window.location.href = contextPath + '/login.xhtml';
+                    }
+                });
+        });
+        //]]>
+    </script>
+</body>
+</html>

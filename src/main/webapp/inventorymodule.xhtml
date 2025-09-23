@@ -1,0 +1,520 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventario Veterinaria</title>
+    <link rel="stylesheet" type="text/css" href="resources/css/stylesinventory.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&amp;display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="text/javascript" src="resources/js/inventory.js"></script>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+</head>
+<body>
+<header>
+    <div class="header-container">
+        <div><img src="resources/images/logo2.png" alt="logo-OHANA" class="logo-ohana" /></div>
+        <div class="header-icons">
+            <button class="icon-button" type="button">🔔</button>
+            <button class="icon-button" type="button">⚙️</button>
+        </div>
+        <button class="user-button" type="button" onclick="cerrarSesion()">
+            <div class="user-profile">
+                <img src="resources/images/profile-pic.jpg" alt="Imagen de perfil" class="profile-image" />
+                <div class="user-info">
+                    <div class="user-name">Cargando...</div>
+                    <div class="user-position">Cargando...</div>
+                </div>
+            </div>
+        </button>
+    </div>
+</header>
+
+<main class="dashboard-container">
+    <section class="tools-section">
+        <div class="search-container">
+            <input type="search" id="filtro-nombre" placeholder="Buscar producto..." class="search-input" />
+            <button class="search-button" type="button" onclick="cargarTabla()">🔍</button>
+        </div>
+        <button class="add-product-btn hidden-for-auxiliar" type="button" onclick="window.location.href='crearproducto.xhtml'">
+            <span>+</span> Agregar Producto
+        </button>
+    </section>
+
+    <div class="content-wrapper">
+        <aside class="sidebar">
+            <ul class="category-list">
+                <li class="category-item" onclick="filtrarPorCategoria('Medicamento')">
+                    <img src="resources/images/iconomed_inventory.png" alt="Medicamentos" class="category-icon" />
+                    <span>Medicamentos</span>
+                </li>
+                <li class="category-item" onclick="filtrarPorCategoria('Alimento')">
+                    <img src="resources/images/iconofood_inventory.png" alt="Alimentos" class="category-icon" />
+                    <span>Alimentos</span>
+                </li>
+                <li class="category-item" onclick="filtrarPorCategoria('Accesorio')">
+                    <img src="resources/images/iconoaccesorios_inventory.png" alt="Accesorios" class="category-icon" />
+                    <span>Accesorios</span>
+                </li>
+                <li class="category-item" onclick="filtrarPorCategoria('Insumo')">
+                    <img src="resources/images/iconoinsumos_inventory.png" alt="Insumos" class="category-icon" />
+                    <span>Insumos</span>
+                </li>
+                <li class="category-item" onclick="filtrarPorCategoria('')">
+                    <span>Todas las categorías</span>
+                </li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <div class="summary-cards">
+                <div class="summary-card stock-alert">
+                    <h3>Stock bajo</h3>
+                    <div class="alert-items" id="stock-bajo"></div>
+                </div>
+                <div class="summary-card expiry-alert">
+                    <h3>Próximos a expirar</h3>
+                    <div class="alert-items" id="proximos-expirar"></div>
+                </div>
+                <div class="summary-card inventory-summary">
+                    <h3>Resumen de inventario</h3>
+                    <div class="chart-container">
+                        <div class="chart-legend">
+                            <div class="legend-item"><span class="color-med"></span>Medicamentos</div>
+                            <div class="legend-item"><span class="color-food"></span>Alimentos</div>
+                            <div class="legend-item"><span class="color-acc"></span>Accesorios</div>
+                            <div class="legend-item"><span class="color-ins"></span>Insumos</div>
+                        </div>
+                        <div class="pie-chart" id="pie-chart"></div>
+                    </div>
+                </div>
+            </div>
+
+            <section class="products-section">
+                <div class="section-header">
+                    <h2>Inventario</h2>
+                    <div class="table-actions">
+                        <button class="action-btn export-btn" type="button" onclick="exportarProductos()">Exportar</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th><th>Categoria</th><th>Marca</th><th>Cantidad</th>
+                                <th>Precio</th><th>Proveedor</th><th>Caducidad</th><th>Descripcion</th>
+                                <th>Stock</th><th>acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-table-body">
+                            <tr><td colspan="10">Cargando productos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+
+<footer class="main-footer">
+    <p>© 2024 Veterinaria OHANA - Todos los derechos reservados</p>
+</footer>
+
+<script type="text/javascript">
+//<![CDATA[
+    var usuarioActual = null;
+    var categoriaActual = '';
+
+    var contextPath = window.location.pathname.substring(0, window.location.pathname.indexOf("/", 2)) || '';
+
+    function getCategoryColor(categoria) {
+        var colors = {
+            'Medicamento': '#067f7f',
+            'Alimento': '#4CAF50',
+            'Accesorio': '#2196F3',
+            'Insumo': '#9C27B0'
+        };
+        return colors[categoria] || '#cccccc';
+    }
+
+    function verificarAutenticacion() {
+        fetch(contextPath + '/api/user-info')
+            .then(function(response) {
+                if (!response.ok) {
+                    console.error("Error al obtener información del usuario. Redirigiendo a login.");
+                    window.location.href = contextPath + '/login.xhtml';
+                    return;
+                }
+                return response.json();
+            })
+            .then(function(userData) {
+                usuarioActual = userData;
+                actualizarUIUsuario();
+                cargarTabla();
+                cargarResumen();
+
+                document.getElementById("filtro-nombre").addEventListener("keypress", function(event) {
+                    if (event.key === "Enter") {
+                        cargarTabla();
+                    }
+                });
+            })
+            .catch(function(error) {
+                console.error("Error de autenticación:", error);
+                window.location.href = contextPath + '/login.xhtml';
+            });
+    }
+
+    function actualizarUIUsuario() {
+        if (usuarioActual) {
+            document.querySelector('.user-name').textContent = usuarioActual.nombre;
+            document.querySelector('.user-position').textContent = usuarioActual.rol;
+
+            var addProductBtn = document.querySelector('.add-product-btn');
+            if (addProductBtn) {
+                if (usuarioActual.rol === 'Administrador') {
+                    addProductBtn.classList.remove('hidden-for-auxiliar');
+                } else {
+                    addProductBtn.classList.add('hidden-for-auxiliar');
+                }
+            }
+        }
+    }
+
+    function cerrarSesion() {
+        fetch(contextPath + '/CerrarSesionServlet', {
+            method: 'GET'
+        }).then(function() {
+            window.location.href = contextPath + '/login.xhtml?logout=success';
+        }).catch(function(error) {
+            console.error("Error al cerrar sesión:", error);
+            Swal.fire('Error', 'No se pudo cerrar la sesión.', 'error');
+        });
+    }
+
+    function cargarTabla() {
+        var filtro = document.getElementById("filtro-nombre").value;
+        var url = contextPath + "/api/productos?nombre=" + encodeURIComponent(filtro);
+
+        if (categoriaActual) {
+            url += "&categoria=" + encodeURIComponent(categoriaActual);
+        }
+
+        fetch(url)
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Error al cargar productos: ' + response.statusText);
+                }
+                return response.text();
+            })
+            .then(function(html) {
+                var tableBody = document.getElementById("product-table-body");
+                tableBody.innerHTML = html;
+
+                if (usuarioActual && usuarioActual.rol !== 'Administrador') {
+                    var buttons = tableBody.querySelectorAll('.delete-btn, .edit-btn');
+                    for (var i = 0; i < buttons.length; i++) {
+                        buttons[i].style.display = 'none';
+                    }
+                } else if (usuarioActual && usuarioActual.rol === 'Administrador') {
+                    var buttons = tableBody.querySelectorAll('.delete-btn, .edit-btn');
+                    for (var i = 0; i < buttons.length; i++) {
+                        buttons[i].style.display = '';
+                    }
+                }
+            })
+            .catch(function(error) {
+                console.error("Error al cargar la tabla:", error);
+                document.getElementById("product-table-body").innerHTML =
+                    '<tr><td colspan="10">Error al cargar los datos. Intente nuevamente.</td></tr>';
+            });
+    }
+
+    function eliminarProducto(idProducto, boton) {
+        if (!usuarioActual || usuarioActual.rol !== 'Administrador') {
+            mostrarNotificacion('Acceso denegado: Se requiere rol de Administrador para eliminar productos.', 'error');
+            return;
+        }
+
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "¡No podrás revertir esta acción!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminarlo!'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                fetch(contextPath + '/api/productos/' + idProducto, {
+                    method: 'DELETE'
+                })
+                .then(function(response) {
+                    return response.json().then(function(data) {
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Error al eliminar');
+                        }
+                        return data;
+                    });
+                })
+                .then(function(data) {
+                    if (data.success) {
+                        Swal.fire('¡Eliminado!', data.message, 'success');
+                        var fila = boton.closest('tr');
+                        fila.style.transition = 'all 0.3s ease-out';
+                        fila.style.opacity = '0';
+                        setTimeout(function() {
+                            fila.remove();
+                            cargarResumen();
+                        }, 300);
+                    } else {
+                        throw new Error(data.message || 'No se pudo eliminar el producto.');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error al eliminar:', error);
+                    Swal.fire('Error', 'No se pudo eliminar el producto: ' + error.message, 'error');
+                });
+            }
+        });
+    }
+
+    // ✅ CORRECCIÓN: Función editarProducto simplificada - redirige a página separada
+    function editarProducto(idProducto) {
+        if (!usuarioActual || (usuarioActual.rol !== 'Administrador' && usuarioActual.rol !== 'Auxiliar')) {
+            mostrarNotificacion('Acceso denegado: Se requiere rol de Administrador o Auxiliar para editar productos.', 'error');
+            return;
+        }
+
+        // ✅ CORRECCIÓN: Redirigir directamente a la página de edición
+        window.location.href = contextPath + '/editarproducto.xhtml?id=' + idProducto;
+    }
+
+    function cargarResumen() {
+        fetch(contextPath + "/api/resumen")
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Error al cargar resumen: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                var stockBajoContainer = document.getElementById("stock-bajo");
+                stockBajoContainer.innerHTML = '';
+
+                if (data.stockBajo.length === 0) {
+                    stockBajoContainer.innerHTML = '<p class="empty-message">No hay productos con stock bajo.</p>';
+                } else {
+                    for (var i = 0; i < data.stockBajo.length; i++) {
+                        var producto = data.stockBajo[i];
+                        var porcentaje = producto.Stock_Producto > 0 ? (producto.Cantidad_Producto / producto.Stock_Producto) * 100 : 0;
+
+                        var clase = '';
+                        if (porcentaje < 20) {
+                            clase = 'critical';
+                        } else if (porcentaje < 40) {
+                            clase = 'warning';
+                        }
+
+                        stockBajoContainer.innerHTML += 
+                            '<div class="alert-item ' + clase + '">' +
+                                '<span class="product-id">#' + producto.idProducto + '</span>' +
+                                '<span class="product-name">' + producto.Nombre_Producto + '</span>' +
+                                '<div class="progress-bar">' +
+                                    '<div class="progress-fill" style="width: ' + porcentaje + '%"></div>' +
+                                    '<span class="progress-text">' + Math.round(porcentaje) + '%</span>' +
+                                '</div>' +
+                            '</div>';
+                    }
+                }
+
+                var expirarContainer = document.getElementById("proximos-expirar");
+                expirarContainer.innerHTML = '';
+
+                if (data.proximosExpirar.length === 0) {
+                    expirarContainer.innerHTML = '<p class="empty-message">No hay productos próximos a expirar.</p>';
+                } else {
+                    for (var i = 0; i < data.proximosExpirar.length; i++) {
+                        var producto = data.proximosExpirar[i];
+                        var fechaCad = new Date(producto.Fecha_Caducidad);
+                        var hoy = new Date();
+                        var diffTime = fechaCad - hoy;
+                        var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        var clase = '';
+                        if (diffDays <= 30) {
+                            clase = 'critical';
+                        } else if (diffDays <= 90) {
+                            clase = 'warning';
+                        }
+
+                        var fechaFormateada = fechaCad.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        
+                        expirarContainer.innerHTML += 
+                            '<div class="alert-item ' + clase + '">' +
+                                '<span class="product-id">#' + producto.idProducto + '</span>' +
+                                '<span class="product-name">' + producto.Nombre_Producto + '</span>' +
+                                '<span class="expiry-date">Vence: ' + fechaFormateada + '</span>' +
+                            '</div>';
+                    }
+                }
+
+                var pieChart = document.getElementById("pie-chart");
+                pieChart.innerHTML = '';
+
+                if (!data.resumenCategorias || data.resumenCategorias.total === 0) {
+                    pieChart.innerHTML = '<p class="empty-message">No hay datos para mostrar el gráfico.</p>';
+                    return;
+                }
+
+                var svgNS = "http://www.w3.org/2000/svg";
+                var svg = document.createElementNS(svgNS, "svg");
+                svg.setAttribute("viewBox", "0 0 200 200");
+                svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+                svg.style.width = "100%";
+                svg.style.height = "100%";
+
+                var backgroundCircle = document.createElementNS(svgNS, "circle");
+                backgroundCircle.setAttribute("cx", "100");
+                backgroundCircle.setAttribute("cy", "100");
+                backgroundCircle.setAttribute("r", "80");
+                backgroundCircle.setAttribute("fill", "transparent");
+                backgroundCircle.setAttribute("stroke", "#e0e0e0");
+                backgroundCircle.setAttribute("stroke-width", "1");
+                svg.appendChild(backgroundCircle);
+
+                var currentAngle = 0;
+                for (var j = 0; j < data.resumenCategorias.categorias.length; j++) {
+                    var cat = data.resumenCategorias.categorias[j];
+                    var percentage = cat.cantidad / data.resumenCategorias.total;
+                    if (percentage > 0) {
+                        var angle = percentage * 360;
+                        var startAngle = currentAngle;
+                        var endAngle = currentAngle + angle;
+
+                        var path = document.createElementNS(svgNS, "path");
+                        var commands = describeArcWithCenter(100, 100, 80, startAngle, endAngle);
+                        path.setAttribute("d", commands);
+                        path.setAttribute("fill", getCategoryColor(cat.categoria));
+                        path.setAttribute("stroke", "#ffffff");
+                        path.setAttribute("stroke-width", "1");
+                        svg.appendChild(path);
+
+                        currentAngle = endAngle;
+                    }
+                }
+
+                pieChart.appendChild(svg);
+            })
+            .catch(function(error) {
+                console.error("Error al cargar el resumen:", error);
+                document.getElementById("pie-chart").innerHTML = '<p class="empty-message">Error al cargar datos del resumen.</p>';
+            });
+    }
+
+    function describeArcWithCenter(x, y, radius, startAngle, endAngle) {
+        var start = polarToCartesian(x, y, radius, endAngle);
+        var end = polarToCartesian(x, y, radius, startAngle);
+
+        var largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+        return [
+            "M", x, y,
+            "L", start.x, start.y,
+            "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+            "Z"
+        ].join(" ");
+    }
+
+    function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+        var angleInRadians = angleInDegrees * Math.PI / 180.0;
+
+        return {
+            x: centerX + (radius * Math.cos(angleInRadians)),
+            y: centerY + (radius * Math.sin(angleInRadians))
+        };
+    }
+    
+    function filtrarPorCategoria(categoria) {
+        categoriaActual = categoria;
+
+        var categoryItems = document.querySelectorAll('.category-item');
+        for (var i = 0; i < categoryItems.length; i++) {
+            categoryItems[i].classList.remove('active');
+        }
+
+        var found = false;
+        for (var i = 0; i < categoryItems.length; i++) {
+            var item = categoryItems[i];
+            var spanText = item.querySelector('span') ? item.querySelector('span').textContent : '';
+            if (categoria === '' && spanText === 'Todas las categorías') {
+                item.classList.add('active');
+                found = true;
+            } else if (spanText === categoria) {
+                item.classList.add('active');
+                found = true;
+            }
+        }
+
+        if (!found && categoria !== '') {
+            for (var i = 0; i < categoryItems.length; i++) {
+                var item = categoryItems[i];
+                if (item.querySelector('span') && item.querySelector('span').textContent.indexOf(categoria) !== -1) {
+                    item.classList.add('active');
+                    break;
+                }
+            }
+        }
+
+        cargarTabla();
+    }
+
+    function exportarProductos() {
+        if (!usuarioActual || usuarioActual.rol !== 'Administrador') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Acceso Denegado',
+                text: 'Solo los administradores pueden exportar productos.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        var exportUrl = contextPath + "/api/productos/exportar";
+
+        var link = document.createElement('a');
+        link.href = exportUrl;
+        link.download = 'productos_inventario.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Exportando...',
+            text: 'La descarga de productos debería comenzar pronto.',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false
+        });
+    }
+
+    function mostrarNotificacion(mensaje, tipo) {
+        Swal.fire({
+            icon: tipo,
+            title: tipo === 'error' ? 'Error' : 'Información',
+            text: mensaje,
+            confirmButtonText: 'OK'
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", verificarAutenticacion);
+//]]>
+</script>
+</body>
+</html>

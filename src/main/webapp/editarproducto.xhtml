@@ -1,0 +1,285 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editar Producto - Veterinaria</title>
+
+    <!-- CSS propio -->
+    <link rel="stylesheet" type="text/css" href="resources/css/productoform.css" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style type="text/css">
+        /* Oculta el formulario por defecto para evitar parpadeos si el JS lo va a mostrar */
+        .product-form-container {
+            display: none; /* Oculto por defecto */
+        }
+        .product-form-container.visible {
+            display: block; /* Visible cuando el JS lo permite */
+        }
+    </style>
+</head>
+<body>
+    <div class="product-form-container">
+        <form id="productForm" class="product-form">
+            <h2>Editar Producto</h2>
+
+            <div class="form-group">
+                <label for="Nombre_Producto">Nombre del Producto:</label>
+                <input type="text" id="Nombre_Producto" name="Nombre_Producto" required="required" />
+            </div>
+
+            <div class="form-group">
+                <label for="Categoria">Categoría:</label>
+                <select id="Categoria" name="Categoria" required="required">
+                    <option value="">Seleccione una categoría</option>
+                    <option value="Medicamento">Medicamento</option>
+                    <option value="Alimento">Alimento</option>
+                    <option value="Accesorio">Accesorio</option>
+                    <option value="Aseo">Aseo</option>
+                    <option value="Juguete">Juguete</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="Marca_Producto">Marca:</label>
+                <input type="text" id="Marca_Producto" name="Marca_Producto" required="required" />
+            </div>
+
+            <div class="form-group">
+                <label for="Cantidad_Producto">Cantidad:</label>
+                <input type="number" id="Cantidad_Producto" name="Cantidad_Producto" required="required" min="0" />
+            </div>
+
+            <div class="form-group">
+                <label for="Precio_Producto">Precio:</label>
+                <input type="number" id="Precio_Producto" name="Precio_Producto" required="required" min="0" step="0.01" />
+            </div>
+
+            <div class="form-group">
+                <label for="Nombre_Proveedor">Proveedor:</label>
+                <input type="text" id="Nombre_Proveedor" name="Nombre_Proveedor" />
+            </div>
+
+            <div class="form-group">
+                <label for="caducidad">Fecha de Caducidad:</label>
+                <input type="date" id="caducidad" name="Fecha_Caducidad" />
+            </div>
+
+            <div class="form-group">
+                <label for="Descripcion_Producto">Descripción:</label>
+                <textarea id="Descripcion_Producto" name="Descripcion_Producto" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="Stock_Producto">Stock:</label>
+                <input type="number" id="Stock_Producto" name="Stock_Producto" required="required" min="0" />
+            </div>
+
+            <button type="submit" class="submit-button">Guardar Cambios</button>
+            <button type="button" class="back-button" onclick="window.location.href='inventorymodule.xhtml'">Volver</button>
+        </form>
+    </div>
+
+    <script type="text/javascript">
+        //<![CDATA[
+        document.addEventListener('DOMContentLoaded', function() {
+            const productFormContainer = document.querySelector('.product-form-container');
+
+            // Calcular contextPath dinámicamente
+            let contextPath = '';
+            try {
+                const parts = window.location.pathname.split('/');
+                contextPath = parts.length > 1 ? '/' + parts[1] : '';
+            } catch(e){ contextPath = ''; }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const idProducto = urlParams.get('id');
+
+            console.log('DEBUG - Cargando editarproducto.xhtml. ID de Producto:', idProducto);
+
+            // Verificar autenticación y rol primero
+            fetch(contextPath + '/api/user-info', { credentials: 'include' })
+                .then(function(response) {
+                    console.log('DEBUG - fetch /api/user-info response status:', response.status);
+                    if (!response.ok) {
+                        console.warn('Advertencia: Respuesta no OK de /api/user-info. Redirigiendo a login.');
+                        window.location.href = contextPath + '/login.xhtml';
+                        throw new Error('No autenticado');
+                    }
+                    return response.json();
+                })
+                .then(function(user) {
+                    console.log('DEBUG - Usuario recibido:', user);
+                    if (user.rol !== 'Administrador' && user.rol !== 'Auxiliar') {
+                        console.warn('Advertencia: Rol no es Administrador o Auxiliar. Acceso denegado.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Acceso denegado',
+                            text: 'Solo los administradores y auxiliares pueden editar productos',
+                            confirmButtonText: 'OK'
+                        }).then(function() {
+                            window.location.href = contextPath + '/inventorymodule.xhtml';
+                        });
+                        return;
+                    }
+
+                    // Mostrar formulario solo si tiene permisos
+                    console.log('DEBUG - Usuario tiene permisos. Mostrando formulario.');
+                    productFormContainer.classList.add('visible');
+
+                    // Configurar fecha mínima para caducidad
+                    const fechaInput = document.getElementById('caducidad');
+                    const hoy = new Date();
+                    hoy.setDate(hoy.getDate() + 1); // Fecha mínima mañana
+                    fechaInput.min = hoy.toISOString().split('T')[0];
+
+                    // Cargar datos del producto si hay ID
+                    if (idProducto) {
+                        cargarProducto(idProducto);
+                    } else {
+                        console.warn('Advertencia: No se encontró ID de producto en la URL para edición.');
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'ID de Producto Faltante',
+                            text: 'No se proporcionó un ID de producto para editar. Redirigiendo.',
+                            confirmButtonText: 'OK'
+                        }).then(function() {
+                            window.location.href = contextPath + '/inventorymodule.xhtml';
+                        });
+                    }
+
+                    // Configurar envío del formulario
+                    configurarEnvioFormulario(idProducto);
+                })
+                .catch(function(error) {
+                    console.error('ERROR CRÍTICO: Fallo al obtener información del usuario o error de red:', error);
+                    if (!window.location.href.includes('login.xhtml')) {
+                        window.location.href = contextPath + '/login.xhtml';
+                    }
+                });
+
+            function cargarProducto(id) {
+                console.log('DEBUG - Cargando datos del producto con ID:', id);
+                fetch(contextPath + '/api/productos/editar/' + id, { credentials: 'include' })
+                    .then(function(response) {
+                        console.log('DEBUG - Respuesta de cargarProducto status:', response.status);
+                        if (!response.ok) {
+                            return response.json().then(function(err) {
+                                const errorMessage = err.error || 'Error desconocido al cargar producto';
+                                console.error('Error en la respuesta del servidor al cargar producto:', errorMessage);
+                                throw new Error(errorMessage);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(function(producto) {
+                        console.log('DEBUG - Producto cargado:', producto);
+                        // Rellenar formulario con datos del producto
+                        document.getElementById('Nombre_Producto').value = producto.nombreProducto || '';
+                        document.getElementById('Categoria').value = producto.categoria || '';
+                        document.getElementById('Marca_Producto').value = producto.marcaProducto || '';
+                        document.getElementById('Cantidad_Producto').value = producto.cantidadProducto || 0;
+                        document.getElementById('Precio_Producto').value = producto.precioProducto || 0;
+                        document.getElementById('Nombre_Proveedor').value = producto.nombreProveedor || '';
+
+                        // Formatear la fecha para el input type="date"
+                        if (producto.fechaCaducidad) {
+                            const fecha = new Date(producto.fechaCaducidad);
+                            document.getElementById('caducidad').value = fecha.toISOString().split('T')[0];
+                        } else {
+                            document.getElementById('caducidad').value = '';
+                        }
+
+                        document.getElementById('Descripcion_Producto').value = producto.descripcionProducto || '';
+                        document.getElementById('Stock_Producto').value = producto.stockProducto || 0;
+                    })
+                    .catch(function(error) {
+                        console.error('Error al cargar producto:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error al cargar producto: ' + error.message,
+                            confirmButtonText: 'OK'
+                        }).then(function() {
+                            window.location.href = contextPath + '/inventorymodule.xhtml';
+                        });
+                    });
+            }
+
+            function configurarEnvioFormulario(idProducto) {
+                document.getElementById('productForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(this);
+                    const producto = {
+                        nombreProducto: formData.get('Nombre_Producto'),
+                        categoria: formData.get('Categoria'),
+                        marcaProducto: formData.get('Marca_Producto'),
+                        cantidadProducto: parseInt(formData.get('Cantidad_Producto') || '0'),
+                        precioProducto: parseFloat(formData.get('Precio_Producto') || '0'),
+                        nombreProveedor: formData.get('Nombre_Proveedor'),
+                        fechaCaducidad: formData.get('Fecha_Caducidad') ? new Date(formData.get('Fecha_Caducidad')).toISOString() : null,
+                        descripcionProducto: formData.get('Descripcion_Producto'),
+                        stockProducto: parseInt(formData.get('Stock_Producto') || '0')
+                    };
+
+                    const url = contextPath + '/api/productos/editar/' + idProducto;
+                    const method = 'PUT';
+
+                    console.log('DEBUG - Enviando producto para edición:', producto);
+                    console.log('DEBUG - Enviando a URL:', url);
+                    console.log('DEBUG - Método HTTP:', method);
+
+                    fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(producto)
+                    })
+                        .then(function(response) {
+                            console.log('DEBUG - Respuesta del PUT de producto status:', response.status);
+                            if (!response.ok) {
+                                return response.json().then(function(err) {
+                                    const errorMessage = err.error || 'Error desconocido del servidor';
+                                    console.error('Error en la respuesta del servidor al guardar:', errorMessage);
+                                    throw new Error(errorMessage);
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(function(data) {
+                            console.log('DEBUG - Producto actualizado exitosamente:', data);
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Éxito',
+                                text: 'Producto actualizado correctamente',
+                                confirmButtonText: 'OK'
+                            }).then(function() {
+                                window.location.href = contextPath + '/inventorymodule.xhtml';
+                            });
+                        })
+                        .catch(function(error) {
+                            console.error('Error al enviar formulario de edición:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Error al guardar cambios: ' + error.message,
+                                confirmButtonText: 'OK'
+                            });
+                        });
+                });
+            }
+        });
+        //]]>
+    </script>
+</body>
+</html>
