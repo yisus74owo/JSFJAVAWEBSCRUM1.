@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Restaurar contraseña</title>
+    <link rel="stylesheet" type="text/css" href="stylesrecover.css" />
+</head>
+<body>
+    <header>
+        <div class="back">
+            <div class="menu container">
+                <img src="images/logo2.png" alt="logo-OHANA" class="logo-ohana" />
+                <input type="checkbox" id="menu" />
+                <label for="menu">
+                    <img src="images/menu.jpg" class="menu-icono" alt="Menú" />
+                </label>
+                <nav class="navbar">
+                    <ul>
+                        <li><a href="OHANA.xhtml">Inicio</a></li>
+                        <li><a href="#servicios">Nosotros</a></li>
+                        <li><a href="#contacto">Contacto</a></li>
+                        <li><a href="#buscar">Buscar</a></li>
+                        <li><a href="login.xhtml">Inicia Sesión</a></li>
+                        <li><a href="registro.xhtml">Regístrate</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="form-register">
+        <h4>¿Olvidaste tu contraseña? Tranquilo, tu mascota y tus productos favoritos te están esperando. Recupera el acceso aquí.</h4>
+
+        <form method="post" action="RecoverServlet">
+            <input class="controls" type="email" name="correo" id="correo"
+                   placeholder="Ingresa tu correo" required="required" />
+            <br />
+            <input class="controls" type="tel" name="telefono" id="telefono"
+                   placeholder="Ingresa tu celular" required="required" />
+            <br />
+            <input type="checkbox" id="miCheckbox" name="confirmacion" />
+            <label for="miCheckbox" class="custom-checkbox">
+                <span class="box"></span>
+                Enviar mensaje de confirmación
+            </label>
+            <br />
+            <input class="botons" type="submit" value="Enviar" />
+            <br />
+        </form>
+    </section>
+</body>
+</html>

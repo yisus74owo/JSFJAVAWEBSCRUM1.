@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Inicio de sesión | OHANA</title>
+
+    <link rel="stylesheet" href="resources/css/styleslogin.css" />
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Bloqueo completo del retroceso del navegador
+        history.pushState(null, null, location.href);
+        window.onpopstate = function() {
+            history.go(1);
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.has('error')) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de inicio de sesión',
+                    text: 'Correo o contraseña incorrectos. Por favor, intente nuevamente.',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+
+            if (urlParams.has('logout')) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Sesión cerrada',
+                    text: 'Has cerrado sesión correctamente.',
+                    confirmButtonColor: '#3085d6',
+                    timer: 3000
+                });
+            }
+
+            if (window.history.replaceState) {
+                const cleanUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+        });
+
+        // Función para mostrar/ocultar contraseña
+        function togglePassword() {
+            const passwordInput = document.querySelector('input[name="password"]');
+            const toggleBtn = document.querySelector('.toggle-password');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '👁️‍🗨️';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+    </script>
+</head>
+<body>
+<header>
+    <div class="back">
+        <div class="menu container">
+            <a href="OHANA.html"><img src="resources/images/logo2.png" alt="logo-OHANA" class="logo-ohana" /></a>
+            <input type="checkbox" id="menu" />
+            <label for="menu">
+                <img src="resources/images/menu.jpg" class="menu-icono" alt="Menú" />
+            </label>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="OHANA.html">Inicio</a></li>
+                    <li><a href="#servicios">Nosotros</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                    <li><a href="#buscar">Buscar</a></li>
+                    <li><a href="login.html" class="active">Inicia Sesión</a></li>
+                    <li><a href="registro.html">Regístrate</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<section class="form-register">
+    <h4>Tu compañero fiel te agradece cada visita. Inicia sesión y sigamos cuidando de él.</h4>
+
+    <form method="post" action="LoginServlet" autocomplete="on">
+        <div class="form-group">
+            <label for="email" class="titulo">Correo electrónico</label>
+            <input class="controls" type="email" id="email" name="email" required="required"
+                   placeholder="ejemplo@correo.com" autocomplete="username" />
+        </div>
+
+        <div class="form-group">
+            <label for="password">Contraseña</label>
+            <div class="password-container">
+                <input class="controls" type="password" id="password" name="password"
+                       required="required" minlength="8" maxlength="16" placeholder="••••••••"
+                       autocomplete="current-password" />
+                <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
+            </div>
+        </div>
+
+        <div class="form-group remember-me">
+            <input type="checkbox" id="remember" name="remember" />
+            <label for="remember" class="custom-checkbox">
+                <span class="box"></span>
+                Recordar mis datos
+            </label>
+        </div>
+
+        <div class="form-group">
+            <input class="botons" type="submit" value="Iniciar sesión" />
+        </div>
+
+        <div class="form-links">
+            <p><a href="registro.xhtml">¿No tienes una cuenta? Regístrate</a></p>
+            <p><a href="restaurar.xhtml">¿Olvidaste tu contraseña?</a></p>
+        </div>
+    </form>
+</section>
+
+</body>
+</html>
