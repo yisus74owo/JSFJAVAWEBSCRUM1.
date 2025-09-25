@@ -27,4 +27,6 @@ public interface ProductosFacadeLocal {
     List<Productos> findProximosExpirar(int meses, int limite);
 
     List<Object[]> resumenPorCategorias();
+
+    public boolean existeProductoPorNombre(String nombreProducto);
 }

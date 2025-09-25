@@ -57,4 +57,16 @@ public class ProductosFacade extends AbstractFacade<Productos> implements Produc
             "SELECT p.categoria, COUNT(p) FROM Productos p GROUP BY p.categoria", Object[].class
         ).getResultList();
     }
+    @Override
+public boolean existeProductoPorNombre(String nombreProducto) {
+    try {
+        Long count = (Long) getEntityManager()
+            .createQuery("SELECT COUNT(p) FROM Productos p WHERE p.nombreProducto = :nombre")
+            .setParameter("nombre", nombreProducto)
+            .getSingleResult();
+        return count > 0;
+    } catch (Exception e) {
+        return false;
+    }
+}
 }

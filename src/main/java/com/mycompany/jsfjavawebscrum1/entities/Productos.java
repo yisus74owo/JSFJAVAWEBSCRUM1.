@@ -5,6 +5,7 @@
 package com.mycompany.jsfjavawebscrum1.entities;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.Basic;
@@ -250,7 +251,7 @@ public class Productos implements Serializable {
 
     @Override
     public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
+        
         if (!(object instanceof Productos)) {
             return false;
         }
@@ -264,6 +265,24 @@ public class Productos implements Serializable {
     @Override
     public String toString() {
         return "com.mycompany.jsfjavawebscrum1.entities.Productos[ idProducto=" + idProducto + " ]";
+    }
+    public void setFechaIngreso(Date date) {
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcionProducto = descripcion;
+    }
+
+    public void setProveedor(String proveedor) {
+        this.nombreProveedor = proveedor;
+    }
+
+    public void setPrecio(BigDecimal precio) {
+        this.precioProducto = precio != null ? precio.doubleValue() : 0.0;
+    }
+
+    public void setMarca(String marca) {
+        this.marcaProducto = marca;
     }
     
 }

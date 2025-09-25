@@ -26,6 +26,7 @@ com\mycompany\jsfjavawebscrum1\controller\model\MascotaFacadeLocal.class
 com\mycompany\jsfjavawebscrum1\controller\controller\TablaProductosServlet.class
 com\mycompany\jsfjavawebscrum1\controller\model\DetalleOrdenCompraFacade.class
 com\mycompany\jsfjavawebscrum1\controller\model\ProveedorFacadeLocal.class
+com\mycompany\jsfjavawebscrum1\controller\controller\ImportarProductosServlet$ResultadoImportacion.class
 com\mycompany\jsfjavawebscrum1\controller\model\RolesFacadeLocal.class
 com\mycompany\jsfjavawebscrum1\entities\Productos.class
 com\mycompany\jsfjavawebscrum1\entities\Proveedor.class
@@ -72,13 +73,16 @@ com\mycompany\jsfjavawebscrum1\entities\NovedadInventario.class
 com\mycompany\jsfjavawebscrum1\controller\model\NovedadProveedoresFacadeLocal.class
 CerrarSesionServlet.class
 com\mycompany\jsfjavawebscrum1\entities\DetalleFacturaVentaPK.class
+com\mycompany\jsfjavawebscrum1\controller\controller\ImportarProductosServlet$ProductoImportado.class
 com\mycompany\jsfjavawebscrum1\controller\controller\LoginServlet.class
 com\mycompany\jsfjavawebscrum1\controller\model\InformacionDomicilioFacadeLocal.class
 com\mycompany\jsfjavawebscrum1\controller\model\NovedadInventarioFacade.class
 com\mycompany\jsfjavawebscrum1\entities\DetalleFacturaVenta.class
+com\mycompany\jsfjavawebscrum1\controller\controller\ImportarProductosServlet.class
 com\mycompany\jsfjavawebscrum1\entities\NovedadInventarioPK.class
 com\mycompany\jsfjavawebscrum1\entities\CarritoCompra.class
 com\mycompany\jsfjavawebscrum1\entities\Rol.class
+com\mycompany\jsfjavawebscrum1\controller\controller\ImportarProductosServlet$1.class
 com\mycompany\jsfjavawebscrum1\controller\controller\EditarProductoServlet.class
 com\mycompany\jsfjavawebscrum1\entities\Roles.class
 com\mycompany\jsfjavawebscrum1\controller\model\DetalleOrdenCompraFacadeLocal.class

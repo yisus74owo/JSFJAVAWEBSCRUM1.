@@ -105,6 +105,7 @@
                 <div class="section-header">
                     <h2>Inventario</h2>
                     <div class="table-actions">
+                        <button class="action-btn import-btn" type="button" onclick="mostrarModalImportacion()">Importar Productos</button>
                         <button class="action-btn export-btn" type="button" onclick="exportarProductos()">Exportar Productos</button>
                     </div>
                 </div>
@@ -126,7 +127,46 @@
         </div>
     </div>
 </main>
+<div id="modal-importacion" class="modal fixed-center" style="display: none;">
+    <div class="modal-content fixed-center">
+        <span class="close" onclick="cerrarModalImportacion()">&times;</span>
+        <h3>Importar Productos desde Excel</h3>
+        
+        <div class="import-instructions">
+            <p><strong>Instrucciones:</strong></p>
+            <ol>
+                <li>Descarga la plantilla de ejemplo</li>
+                <li>Llena los datos de tus productos</li>
+                <li>Sube el archivo Excel (.xlsx)</li>
+            </ol>
+            
+            <button class="btn-descargar-plantilla" onclick="descargarPlantilla()">
+                📋 Descargar Plantilla
+            </button>
+        </div>
 
+        <form id="form-importacion" enctype="multipart/form-data">
+            <div class="file-upload-container">
+                <input type="file" id="archivo-excel" name="archivoExcel" 
+                       accept=".xlsx" required="required" />
+                <label for="archivo-excel" class="file-upload-label">
+                    📁 Seleccionar archivo Excel
+                </label>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-cancelar" onclick="cerrarModalImportacion()">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn-importar">
+                    📤 Importar Productos
+                </button>
+            </div>
+        </form>
+        
+        <div id="resultado-importacion" class="resultado-importacion"></div>
+    </div>
+</div>
 <footer class="main-footer">
     <p>© 2024 Veterinaria OHANA - Todos los derechos reservados</p>
 </footer>
@@ -299,6 +339,105 @@
         window.location.href = contextPath + '/editarproducto.xhtml?id=' + idProducto;
     }
 
+function mostrarModalImportacion() {
+    if (!usuarioActual || usuarioActual.rol !== 'Administrador') {
+        mostrarNotificacion('Solo los administradores pueden importar productos.', 'error');
+        return;
+    }
+    var modal = document.getElementById('modal-importacion');
+    
+    // Centrar el modal
+    modal.style.display = 'flex';
+    modal.classList.add('fixed-center');
+    
+    document.getElementById('resultado-importacion').innerHTML = '';
+}
+
+function cerrarModalImportacion() {
+    var modal = document.getElementById('modal-importacion');
+    modal.style.display = 'none';
+    modal.classList.remove('fixed-center');
+    document.getElementById('form-importacion').reset();
+}
+
+function descargarPlantilla() {
+    // Crear enlace de descarga para la plantilla
+    const link = document.createElement('a');
+    link.href = contextPath + '/resources/plantillas/plantilla_importacion_productos.xlsx';
+    link.download = 'plantilla_importacion_productos.xlsx';
+    link.click();
+}
+
+// Manejar el envío del formulario de importación
+document.getElementById('form-importacion').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const archivoInput = document.getElementById('archivo-excel');
+    if (!archivoInput.files[0]) {
+        mostrarNotificacion('Por favor selecciona un archivo Excel.', 'error');
+        return;
+    }
+    
+    importarProductos(archivoInput.files[0]);
+});
+
+function importarProductos(archivo) {
+    const formData = new FormData();
+    formData.append('archivoExcel', archivo);
+    
+    Swal.fire({
+        title: 'Importando...',
+        text: 'Procesando archivo Excel',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    fetch(contextPath + '/api/importar-productos', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(resultado => {
+        Swal.close();
+        
+        if (resultado.success) {
+            mostrarResultadoImportacion(resultado);
+            cargarTabla();
+            cargarResumen();
+        } else {
+            mostrarNotificacion(resultado.error, 'error');
+        }
+    })
+    .catch(error => {
+        Swal.close();
+        mostrarNotificacion('Error al importar: ' + error.message, 'error');
+    });
+}
+
+function mostrarResultadoImportacion(resultado) {
+    const contenedor = document.getElementById('resultado-importacion');
+    let html = '<div class="resultado-exitoso">';
+    html += '<h4>✅ Importación Completada</h4>';
+    html += '<p>Total registros: ' + resultado.totalRegistros + '</p>';
+    html += '<p>Importados exitosos: ' + resultado.importadosExitosos + '</p>';
+    html += '<p>Errores: ' + resultado.errores + '</p>';
+    
+    if (resultado.errores > 0) {
+        html += '<div class="errores-importacion">';
+        html += '<h5>Errores encontrados:</h5>';
+        html += '<ul>';
+        resultado.detalleErrores.forEach(error => {
+            html += '<li>' + error + '</li>';
+        });
+        html += '</ul>';
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    contenedor.innerHTML = html;
+}
     function cargarResumen() {
         fetch(contextPath + "/api/resumen")
             .then(function(response) {
@@ -421,7 +560,7 @@
             });
     }
 
-    // ✅ NUEVA FUNCIÓN: Exportar resumen (gráfica y datos)
+    // FUNCIÓN: Exportar resumen (gráfica y datos)
     function exportarResumen() {
         if (!usuarioActual) {
             mostrarNotificacion('Debe estar autenticado para exportar el resumen.', 'error');
